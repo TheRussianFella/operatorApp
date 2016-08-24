@@ -2,13 +2,9 @@ from Bundle import Bundle
 
 class Order:
 
-    id = ""
-    #sets = []
-    bundles = {}
-
-    def __init__(self, id, bundles = {}):
+    def __init__(self, id):
         self.id = id
-        self.bundles = bundles
+        self.bundles = dict()
 
     def add(self, bundle):
         #self.sets.append(set)
