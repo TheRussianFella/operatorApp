@@ -1,21 +1,24 @@
 import requests
-
+import json
 
 class WebClient:
 
-    _host = ""
+    host = ""
 
     def __init__(self, host):
-        self._host = host
+        self.host = host
 
     def getOrders(self):
-        response = requests.get(_host + "\orders")
+        response = requests.get(self.host + "/api/get_orders")
 
         assert response.status_code == 200
 
-        orders = response.json()
+        orders = json.loads(response.text)
 
         return orders
 
+    #def getPics():
+        #response = requests.get(_host)
+
     def reportComplition(self, id):
-        requests.post(_host + "\report", "OK")
+        requests.post(_host + "/complete", "OK")
