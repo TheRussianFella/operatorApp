@@ -18,6 +18,8 @@ from Element import Element
 class Ui_MainWindow(object):
 
     orders = {}
+    d = QtWidgets.QDialog
+
     #Slots
 
     def refresh(self):
@@ -25,21 +27,12 @@ class Ui_MainWindow(object):
 
         jsonOrders = wc.getOrders()
 
-        self.treeWidget.clear()
-
-
         elementCount = 0
 
         for order in jsonOrders['orders']:
 
             orderId = str(order['id'])
             self.orders[orderId] = Order(orderId)
-
-            treeOrder = QtWidgets.QTreeWidgetItem()
-
-            mes = "Заказ №" + orderId
-            treeOrder.setText(0, mes)
-            self.treeWidget.addTopLevelItem(treeOrder)
 
             for bundle in order['bundles']:
 
@@ -51,15 +44,6 @@ class Ui_MainWindow(object):
 
                 elementCount = 0
 
-                treeBundle = QtWidgets.QTreeWidgetItem()
-
-                tempMes1 = "Набор " + name
-                tempMes2 = " №" + self.orders[orderId][bundleId].id
-                tempMes3 = " X" + str(self.orders[orderId][bundleId].quantity)
-                mes = tempMes1 + tempMes2 + tempMes3
-                treeBundle.setText(0, mes)
-
-                treeOrder.addChild(treeBundle)
                 for element in bundle['elements']:
                     id = str(element['id'])
                     name = element['name']
@@ -67,38 +51,14 @@ class Ui_MainWindow(object):
 
                     self.orders[orderId][bundleId].add(Element(id, name, quantity))
 
-                    treeElement = QtWidgets.QTreeWidgetItem()
-
                     name = self.orders[orderId][bundleId][elementCount].name
                     quantity = str(self.orders[orderId][bundleId][elementCount].quantity)
 
                     elementCount += 1
 
-                    mes = name + " X" + quantity
-
-                    treeElement.setText(0, mes)
-
-                    treeBundle.addChild(treeElement)
-
-        #for order in self.orders.values():
-            #print(order.id)
-            #for bundle in order.bundles.values():
-                #print(bundle.id)
-                #print(bundle.elements)
-
+        self.paintTree(self.orders)
 
     def startWork(self):
-
-        d = QtWidgets.QDialog()
-        d.setWindowTitle("helpDialog")
-
-        startButton = QtWidgets.QPushButton("Start",d)
-        cancelButton = QtWidgets.QPushButton("Cancel",d)
-
-        layout = QtWidgets.QVBoxLayout(d)
-
-        #if :
-        #    curItem = self.treeWidget.topLevelItem(0)
 
         curItem = self.treeWidget.selectedItems()[0]
 
@@ -114,38 +74,134 @@ class Ui_MainWindow(object):
 
         orderId = order[orderPos:]
 
-        table = QtWidgets.QTableWidget()
-        table.setRowCount(self.orders[orderId][bundleId].length())
-        table.setColumnCount(3)
-        table.columnSpan(0, 1)
+        if curItem.child() == None:
+            name = curItem.name
 
-        index = 0
-
-        for element in self.orders[orderId][bundleId].elements:
-
-            pic = QtWidgets.QLabel()
-            pm = QtGui.QPixmap(50, 50)
-            pm.load("test.jpg")
-            pic.setPixmap(pm)
-
-            table.setCellWidget(index, 0, pic)
-            table.setItem(index, 1, QtWidgets.QTableWidgetItem(element.name))
-            table.setItem(index, 2, QtWidgets.QTableWidgetItem(str(element.quantity)))
-            index += 1
+            index = 0
+            for element in self.orders[orderId][bundleId]:
+                if element.name == name:
+                    break
+                index += 1
 
 
-        #pic = QtWidgets.QLabel(d)
-        #pic.setFixedSize(50, 50)
-        #pm = QtGui.QPixmap(50, 50)
-        #pic.setPixmap(pm)
+        self.d = QtWidgets.QDialog()
 
-        layout.addWidget(table)
-        layout.addWidget(startButton)
+        self.d.setWindowTitle("helpDialog")
+
+        cancelButton = QtWidgets.QPushButton("Cancel",self.d)
+        cancelButton.clicked.connect(self.d.close)
+
+        layout = QtWidgets.QVBoxLayout(self.d)
+
+        hor = QtWidgets.QHBoxLayout()
+
+        pic = QtWidgets.QLabel(self.d)
+        pic.setFixedSize(100, 100)
+        pm = QtGui.QPixmap(100, 100)
+        pm.load("test.jpg")
+        pic.setPixmap(pm)
+
+        hor.addWidget(pic)
+
+        element = self.orders[orderId][bundleId][0]
+
+        name = QtWidgets.QLabel(element.name)
+
+        hor.addWidget(name)
+
+        quant = QtWidgets.QLabel("X" + str(element.quantity))
+
+        hor.addWidget(quant)
+
+        layout.addLayout(hor)
+
         layout.addWidget(cancelButton)
 
-        d.exec_()
+        self.d.exec_()
+
+    def changeElementInDialog(self, orderId, bundleId, element):
+
+        self.d.close()
+
+        self.d = QtWidgets.QDialog()
+
+        self.d.setWindowTitle("helpDialog")
+
+        cancelButton = QtWidgets.QPushButton("Cancel",self.d)
+        cancelButton.clicked.connect(self.d.close)
+
+        layout = QtWidgets.QVBoxLayout(self.d)
+
+        hor = QtWidgets.QHBoxLayout()
+
+        pic = QtWidgets.QLabel(self.d)
+        pic.setFixedSize(100, 100)
+        pm = QtGui.QPixmap(100, 100)
+        pm.load("test.jpg")
+        pic.setPixmap(pm)
+
+        hor.addWidget(pic)
+
+        element = self.orders[orderId][bundleId][element]
+
+        name = QtWidgets.QLabel(element.name)
+
+        hor.addWidget(name)
+
+        quant = QtWidgets.QLabel("X" + str(element.quantity))
+
+        hor.addWidget(quant)
+
+        layout.addLayout(hor)
+
+        layout.addWidget(cancelButton)
+
+        self.d.exec_()
 
     ##########
+
+    def paintTree(self, orders):
+
+        self.treeWidget.clear()
+
+        for order in orders.values():
+
+            treeOrder = QtWidgets.QTreeWidgetItem()
+
+            orderId = order.id
+            mes = "Заказ №" + orderId
+            treeOrder.setText(0, mes)
+            self.treeWidget.addTopLevelItem(treeOrder)
+
+            for bundle in order.bundles.values():
+
+                treeBundle = QtWidgets.QTreeWidgetItem()
+
+                bundleId = bundle.id
+                tempMes1 = "Набор " + bundle.name
+                tempMes2 = " №" + bundle.id
+                tempMes3 = " X" + str(bundle.quantity)
+                mes = tempMes1 + tempMes2 + tempMes3
+                treeBundle.setText(0, mes)
+
+                treeOrder.addChild(treeBundle)
+
+                elementCount = 0
+
+                for element in bundle.elements:
+
+                    treeElement = QtWidgets.QTreeWidgetItem()
+
+                    name = element.name
+                    quantity = str(element.quantity)
+
+                    elementCount += 1
+
+                    mes = name + " X" + quantity
+
+                    treeElement.setText(0, mes)
+
+                    treeBundle.addChild(treeElement)
 
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
