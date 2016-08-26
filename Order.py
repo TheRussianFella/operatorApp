@@ -12,3 +12,6 @@ class Order:
 
     def __getitem__(self, index):
         return self.bundles[index]
+
+    def length():
+        return len(self.bundled)
