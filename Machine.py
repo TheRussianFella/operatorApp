@@ -7,8 +7,8 @@ import sys, glob, serial, time
 class Machine(QObject):
 
 
-    completedSignal = pyqtSignal(name = "completedSignal")
-    achtungSignal = pyqtSignal(name = "achtungSignal")
+    goodSignal = pyqtSignal(int, name = "goodSignal")
+    badSignal = pyqtSignal(int, name = "achtungSignal")
     newElement = pyqtSignal(name = "newElement")
 
     errorCodes = enum(ACHTUNG = b'0')
@@ -54,7 +54,7 @@ class Machine(QObject):
             if rcv == self.goodCodes.MACHINE_ANSWER:
                 self.machinePortName = port
             print(self.machinePortName)
-            
+
             ser.close()
 
         self.hasWork = True
@@ -81,9 +81,9 @@ class Machine(QObject):
             code = self.waitForSignal()
 
             if code == self.errorCodes.ACHTUNG:
-                self.achtungSignal.emit()
-            elif code == self.goodCodes.ACHTUNG_GONE:
-                print("achtung gone")
+                self.badSignal.emit(self.errorCodes.ACHTUNG)
+            elif code == self.ACHTUNG_GONE:
+                self.goodSignal.emit(self.goodCodes.ACHTUNG_GONE)
             elif code == self.goodCodes.NEW_SHEET:
                 print("new sheet needed")
             elif code == self.goodCodes.NEW_SLIDE:
